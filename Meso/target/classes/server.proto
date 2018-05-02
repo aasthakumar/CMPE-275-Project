@@ -1,0 +1,118 @@
+syntax = "proto3";
+package grpcComm;
+option java_multiple_files = true;
+option java_package = "com.cmpe275.grpcComm";
+option java_outer_classname = "DataProto";
+
+message LeaderRequest {
+    string data = 1;
+}
+
+message ReadData {
+  int64 start = 1;
+  int64 end = 2;
+}
+
+message BoolResponse {
+    bool result = 1;
+}
+
+message ReplicationRequest{
+	int32 id = 1;
+}
+
+
+message ClientResponse{
+	int32 id = 1;
+	bool is_leader = 2;
+	int32 leader_id = 3;
+}
+
+message NodeState{
+	string state=1;
+}
+
+message Request {
+ string fromSender = 1;
+ string toReceiver = 2;
+ string originalSender = 3;
+
+ oneof payload {
+   PingRequest ping = 6;
+   PutRequest putRequest = 7;
+   GetRequest getRequest = 8;
+ }
+}
+
+message Response {
+ StatusCode code = 1; // PingRequest will only use this field if succeeded
+ string msg = 2;      //ni
+ MetaData metaData = 3;
+ DatFragment datFragment = 4;
+}
+
+message PingRequest {
+ string msg = 1; // optional
+}
+
+message PutRequest {
+ MetaData metaData = 1;
+ DatFragment datFragment = 2;
+}
+
+message GetRequest {
+ MetaData metaData = 1;
+ QueryParams queryParams = 2;
+}
+
+message QueryParams {
+ string from_utc = 1;
+ string to_utc = 2;
+ string params_json = 3;
+}
+
+message MetaData {
+ string uuid = 1;
+ int32 numOfFragment = 2;
+ int32 mediaType = 3;
+}
+
+message DatFragment {
+ string timestamp_utc = 1;
+ bytes data = 2;
+}
+
+enum StatusCode {
+ Unknown = 0;
+ Ok = 1;
+ Failed = 2;
+ EOF=3;
+}
+
+message EmptyRequest{
+}
+
+message DateResponse{
+	repeated Dates dates = 1;
+}
+
+message Dates {
+    string date = 1;
+  }
+
+service CommunicationService {
+   rpc pingInternal(LeaderRequest) returns(BoolResponse) {}
+   rpc getClientStatus(ReplicationRequest) returns(ClientResponse) {}
+   rpc setLeader(ReplicationRequest) returns (BoolResponse) {}
+   rpc requestVote(ReplicationRequest) returns (BoolResponse) {}
+   rpc setNodeState(NodeState) returns (BoolResponse) {}
+   rpc getLeaderNode(ReplicationRequest) returns (ReplicationRequest) {}
+   //interface, for inter-intra cluster communication
+   rpc putHandler(stream Request) returns (Response);
+   rpc getHandler(Request) returns (stream Response);
+   rpc GetFromLocalCluster(Request) returns (stream Response);
+   rpc PutToLocalCluster(stream Request) returns (Response);
+   rpc ping(Request) returns (Response);
+   rpc getUniqueDateIds(EmptyRequest) returns (DateResponse) {};
+   rpc updateBloomFilter(EmptyRequest) returns (BoolResponse){}
+}
