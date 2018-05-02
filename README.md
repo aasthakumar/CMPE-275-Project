@@ -15,6 +15,6 @@ space = 10737418240 -- change it as per your systems capacity.
 python server.py (present under raft/src folder)
 This will start the leader election and will select the leader.
 
-### Start gRPC client to list for external requests ###
+### Start gRPC client to listen for external requests ###
 python client.py
 
